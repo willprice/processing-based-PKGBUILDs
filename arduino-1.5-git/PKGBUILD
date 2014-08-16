@@ -1,0 +1,43 @@
+# Original Maintainer: ente <ducksource@duckpond.ch>
+# Mainter: Will Price <will.price94+aur@gmail.com>
+pkgname=arduino-git
+pkgver=20140816
+pkgrel=3
+pkgdesc="Arduino SDK (compiled from git)"
+arch=('i686' 'x86_64')
+url="http://arduino.cc/en/Main/Software"
+license=('GPL')
+groups=()
+depends=('avr-libc' 'libusb-compat' 'java-runtime')
+makedepends=('git' 'apache-ant' 'tar')
+optdepends=()
+provides=('arduino')
+conflicts=('arduino')
+replaces=()
+backup=()
+options=(!strip staticlibs)
+install="arduino-git.install"
+source=(arduino-git::git+https://github.com/arduino/Arduino.git
+        10-arduino.rules)
+md5sums=('SKIP' 'a9f8a8d7611c3ebd2964937af63ff563') #generate with 'makepkg -g'
+
+build() {
+  cd "${srcdir}/${source%%::*}/build"
+
+  ant linux-dist
+
+  [[ -d ${srcdir}/build ]] || mkdir "${srcdir}/build"
+  mv "linux/arduino-\${version}-linux.tgz" "${srcdir}/build/arduino.tgz"
+}
+
+package() {
+  cd "${srcdir}/build"
+  tar -xvf "arduino.tgz" -C "${pkgdir}"
+  mkdir -p "${pkgdir}/"{usr/{lib,bin},etc/udev/rules.d}
+  cp "${srcdir}/10-arduino.rules" "${pkgdir}/etc/udev/rules.d/"
+  mv "${pkgdir}/arduino-\${version}" "${pkgdir}/usr/lib/arduino"
+  ln -s "/usr/lib/arduino/arduino"  "${pkgdir}/usr/bin/arduino"
+  chown -R root:root "${pkgdir}"
+}
+
+# vim:set ts=2 sw=2 et:
